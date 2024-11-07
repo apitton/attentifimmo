@@ -1,0 +1,41 @@
+<form action="getCustomerAddress.php" method="POST">
+    <label for="name">Nom du client:</label>
+    <input type="text" id="name" name="name" required>
+    <button type="submit">Obtenir l'adresse</button>
+</form>
+<?php
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $customerName = $_POST["name"];
+    
+    // Bitrix24 webhook URL (replace with your actual URL)
+    $bitrix24Webhook = "https://attentifimmo.bitrix24.com/rest/12/yu599kv969jcnquq/";
+    
+    // Set up parameters for the Bitrix24 API request
+    $params = [
+        'filter' => ['NAME' => $customerName],
+        'select' => ['ID', 'NAME', 'ADDRESS']
+    ];
+    
+    // Convert parameters to URL query string
+    $url = $bitrix24Webhook . '?' . http_build_query($params);
+
+    // Initialize CURL and make the GET request
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    // Decode JSON response from Bitrix24
+    $data = json_decode($response, true);
+
+    // Check if customer data was found
+    if (!empty($data['result'])) {
+        $customer = $data['result'][0]; // Get the first result
+        echo "Customer Name: " . $customer['NAME'] . "<br>";
+        echo "Customer Address: " . $customer['ADDRESS'];
+    } else {
+        echo "Customer not found.";
+    }
+}
+?>
